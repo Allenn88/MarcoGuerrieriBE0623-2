@@ -1,0 +1,109 @@
+Progetto settimanale
+
+DataBase Polizia Municipale ------> gestione contravvenzioni e relativi pagamenti
+
+gestione DataBase ------> Anagrafica ------------>  tipi di violazione
+						    Annotare verbale
+						    Archivirare verbale
+
+
+creare tabelle:
+
+
+Anagrafica (idanagrafica, Cognome, Nome, Indirizzo, Città, CAP, Cod_Fisc) 
+
+
+verbale (idverbale, DataViolazione, IndirizzoViolazione, Nominativo_Agente, DataTrascrizioneVerbale, Importo, DecurtamentoPunti) Id anagrafica id violazione
+
+
+tipo violazione (idviolazione, descrizione) 
+
+
+1 - SELECT COUNT(*) AS NumeroVerbaliTrascritti
+FROM [PoliziaMunicipale].[dbo].[Verbale];
+
+2 - SELECT A.[IDAnagrafica], COUNT(*) AS NumeroVerbali
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+GROUP BY A.[IDAnagrafica];
+
+3 - SELECT VV.[Descrizione], COUNT(*) AS NumeroVerbali
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Violazione] VV ON V.[IDViolazione] = VV.[IDViolazione]
+GROUP BY VV.[Descrizione];
+
+4 - SELECT A.[IDAnagrafica], SUM(V.[DecurtamentoPunti]) AS TotalePuntiDecurtati
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+GROUP BY A.[IDAnagrafica];
+
+5 - SELECT A.[Cognome], A.[Nome], V.[DataViolazione], V.[IndirizzoViolazione], V.[Importo], V.[DecurtamentoPunti]
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+WHERE A.[Citta] = 'Palermo';
+
+6 - SELECT A.[Cognome], A.[Nome], A.[Indirizzo], V.[DataViolazione], V.[Importo], V.[DecurtamentoPunti]
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+WHERE V.[DataViolazione] BETWEEN '2009-02-01' AND '2009-07-31';
+
+7 - SELECT A.[IDAnagrafica], A.[Cognome], A.[Nome], SUM(V.[Importo]) AS TotaleImporti
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+GROUP BY A.[IDAnagrafica], A.[Cognome], A.[Nome];
+
+8 - SELECT *
+FROM [PoliziaMunicipale].[dbo].[Anagrafica]
+WHERE [Citta] = 'Palermo';
+
+9 - DECLARE @DataRicerca DATE = '2024-02-09'; -- Sostituisci con la data desiderata
+SELECT [DataViolazione], [Importo], [DecurtamentoPunti]
+FROM [PoliziaMunicipale].[dbo].[Verbale]
+WHERE [DataViolazione] = @DataRicerca;
+
+10 - SELECT [NominativoAgente], COUNT(*) AS NumeroViolazioniContestate
+FROM [PoliziaMunicipale].[dbo].[Verbale]
+GROUP BY [NominativoAgente];
+
+11 - SELECT A.[Cognome], A.[Nome], A.[Indirizzo], V.[DataViolazione], V.[Importo], V.[DecurtamentoPunti]
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+WHERE V.[DecurtamentoPunti] > 5;
+
+12 - SELECT A.[Cognome], A.[Nome], A.[Indirizzo], V.[DataViolazione], V.[Importo], V.[DecurtamentoPunti]
+FROM [PoliziaMunicipale].[dbo].[Verbale] V
+JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+WHERE V.[Importo] > 400;
+
+
+
+storedProcedure
+
+1 - CREATE PROCEDURE VisualizzaContravvenzioniPerAnno
+    @Anno INT
+AS
+BEGIN
+    SELECT A.[Cognome], A.[Nome], V.[DataViolazione], V.[IndirizzoViolazione], VV.[Descrizione] AS TipoViolazione, V.[Importo], V.[DecurtamentoPunti]
+    FROM [PoliziaMunicipale].[dbo].[Verbale] V
+    JOIN [PoliziaMunicipale].[dbo].[Anagrafica] A ON V.[IDAnagrafica] = A.[IDAnagrafica]
+    JOIN [PoliziaMunicipale].[dbo].[Violazione] VV ON V.[IDViolazione] = VV.[IDViolazione]
+    WHERE YEAR(V.[DataViolazione]) = @Anno;
+END;
+
+2 - CREATE PROCEDURE VisualizzaTotalePuntiDecurtatiPerData
+    @DataRicerca DATE
+AS
+BEGIN
+    SELECT SUM([DecurtamentoPunti]) AS TotalePuntiDecurtati
+    FROM [PoliziaMunicipale].[dbo].[Verbale]
+    WHERE [DataViolazione] = @DataRicerca;
+END;
+
+3 - CREATE PROCEDURE EliminaVerbalePerID
+    @IDVerbale INT
+AS
+BEGIN
+    DELETE FROM [PoliziaMunicipale].[dbo].[Verbale]
+    WHERE [IDVerbale] = @IDVerbale;
+END;
+
